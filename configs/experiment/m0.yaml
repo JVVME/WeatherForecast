@@ -1,0 +1,7 @@
+project:
+  name: weather-ai
+  timezone: UTC
+
+logging:
+  level: INFO
+  format: json

@@ -1,0 +1,36 @@
+# Python and tooling
+.venv/
+.uv-cache/
+.uv-python/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editors and local environment
+.idea/
+.vscode/
+.env
+
+# Build outputs
+build/
+dist/
+*.egg-info/
+
+# Project data and generated artifacts
+data/raw/**
+data/interim/**
+data/processed/**
+data/manifests/**
+data/external/**
+artifacts/checkpoints/**
+artifacts/metrics/**
+artifacts/predictions/**
+artifacts/figures/**
+artifacts/reports/**
+
+# Keep explicit placeholders if a later milestone needs one.
+!**/.gitkeep

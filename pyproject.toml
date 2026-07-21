@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "weather-ai"
+version = "0.1.0"
+description = "Reproducible local short-range weather forecasting research project"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "PyYAML>=6.0.2,<7",
+]
+
+[project.scripts]
+weather-ai = "weather_ai.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.15,<2",
+    "pytest>=8.3,<10",
+    "ruff>=0.11,<1",
+    "types-PyYAML>=6,<7",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/weather_ai"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers -ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]
