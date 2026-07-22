@@ -1,7 +1,8 @@
-"""ERA5 download planning and file-management primitives."""
+"""ERA5 download, inspection, and validation primitives."""
 
 from weather_ai.data.config import Era5DownloadConfig, load_era5_download_config
 from weather_ai.data.service import DownloadPlan, execute_download, plan_download
+from weather_ai.data.validation import validate_era5_file
 
 __all__ = [
     "DownloadPlan",
@@ -9,4 +10,5 @@ __all__ = [
     "execute_download",
     "load_era5_download_config",
     "plan_download",
+    "validate_era5_file",
 ]

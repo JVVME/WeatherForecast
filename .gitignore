@@ -5,6 +5,7 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pytest-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -33,6 +34,7 @@ artifacts/metrics/**
 artifacts/predictions/**
 artifacts/figures/**
 artifacts/reports/**
+artifacts/data-validation/**
 
 # Keep explicit placeholders if a later milestone needs one.
 !**/.gitkeep
