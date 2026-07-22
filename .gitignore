@@ -14,6 +14,8 @@ htmlcov/
 .idea/
 .vscode/
 .env
+.cdsapirc
+*.nc.part
 
 # Build outputs
 build/

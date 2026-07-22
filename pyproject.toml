@@ -9,6 +9,7 @@ description = "Reproducible local short-range weather forecasting research proje
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "cdsapi>=0.7.7,<1",
     "PyYAML>=6.0.2,<7",
 ]
 

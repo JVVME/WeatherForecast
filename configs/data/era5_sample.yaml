@@ -1,0 +1,29 @@
+# M1-A small-sample configuration: exactly one calendar month and one small area.
+scope: sample
+dataset: reanalysis-era5-single-levels
+year: 2024
+month: 1
+
+# Example rectangle around Shanghai. Change these values for another target location.
+area:
+  id: shanghai
+  north: 31.75
+  west: 120.75
+  south: 30.75
+  east: 122.00
+
+variables:
+  - 2m_temperature
+  - 2m_dewpoint_temperature
+  - surface_pressure
+  - 10m_u_component_of_wind
+  - 10m_v_component_of_wind
+
+output:
+  format: netcdf
+  directory: data/raw/era5
+  manifest: data/manifests/era5_downloads.json
+
+logging:
+  level: INFO
+  format: json

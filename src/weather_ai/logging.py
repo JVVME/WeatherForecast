@@ -20,7 +20,7 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        for field in ("event", "config_path"):
+        for field in ("event", "config_path", "target_path"):
             if hasattr(record, field):
                 payload[field] = getattr(record, field)
         if record.exc_info:
