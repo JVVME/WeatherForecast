@@ -1,0 +1,20 @@
+# M2-A sample: normalize one immutable ERA5 month only after M1-B passes.
+source:
+  file: data/raw/era5/reanalysis-era5-single-levels_2024-01_shanghai_cb873b991d23.nc
+  download_manifest: data/manifests/era5_downloads.json
+  validation_report: artifacts/data-validation/era5_2024_01_shanghai.json
+
+output:
+  directory: data/interim/era5
+  format: netcdf4
+  allow_overwrite: false
+
+expected_variables:
+  - 2m_temperature
+  - 2m_dewpoint_temperature
+  - surface_pressure
+  - 10m_u_component_of_wind
+  - 10m_v_component_of_wind
+
+dtype: float32
+coordinate_sort: ascending

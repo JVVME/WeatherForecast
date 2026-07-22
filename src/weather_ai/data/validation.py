@@ -139,7 +139,15 @@ def validate_era5_file(file_path: Path, manifest_path: Path) -> ValidationReport
             "the NetCDF SHA-256 changed while validation was running",
         )
 
-    return _report(resolved_file, resolved_manifest, issues, dataset=dataset_summary)
+    return _report(
+        resolved_file,
+        resolved_manifest,
+        issues,
+        dataset=dataset_summary,
+        file_size_bytes=file_size,
+        file_sha256=initial_hash,
+        file_sha256_after_validation=final_hash,
+    )
 
 
 def _load_manifest_record(
@@ -883,10 +891,16 @@ def _report(
     issues: list[ValidationIssue],
     *,
     dataset: DatasetSummary | None,
+    file_size_bytes: int | None = None,
+    file_sha256: str | None = None,
+    file_sha256_after_validation: str | None = None,
 ) -> ValidationReport:
     return ValidationReport(
         file_path=str(file_path),
         manifest_path=str(manifest_path),
+        file_size_bytes=file_size_bytes,
+        file_sha256=file_sha256,
+        file_sha256_after_validation=file_sha256_after_validation,
         status=validation_status(issues),
         issues=tuple(issues),
         dataset=dataset,

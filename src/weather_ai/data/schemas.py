@@ -125,6 +125,9 @@ class ValidationReport:
 
     file_path: str
     manifest_path: str
+    file_size_bytes: int | None
+    file_sha256: str | None
+    file_sha256_after_validation: str | None
     status: ValidationStatus
     issues: tuple[ValidationIssue, ...]
     dataset: DatasetSummary | None
@@ -147,6 +150,9 @@ class ValidationReport:
         return {
             "file_path": self.file_path,
             "manifest_path": self.manifest_path,
+            "file_size_bytes": self.file_size_bytes,
+            "file_sha256": self.file_sha256,
+            "file_sha256_after_validation": self.file_sha256_after_validation,
             "status": self.status,
             "error_count": self.error_count,
             "warning_count": self.warning_count,

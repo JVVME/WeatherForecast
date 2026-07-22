@@ -10,7 +10,7 @@ import pytest
 
 from weather_ai.cli import main
 from weather_ai.data.config import Era5DownloadConfig, load_era5_download_config
-from weather_ai.data.errors import DataDownloadError, TargetExistsError
+from weather_ai.data.errors import CdsDownloadError, TargetExistsError
 from weather_ai.data.service import DownloadPlan, execute_download, plan_download
 
 
@@ -28,11 +28,36 @@ class FailingClient:
     def __init__(self, secret: str = "not-used") -> None:
         self.secret = secret
         self.calls = 0
+        self.error = RuntimeError(f"remote failure with key={self.secret}")
 
     def download(self, dataset: str, request: dict[str, object], target: Path) -> None:
         self.calls += 1
         target.write_bytes(b"partial")
-        raise RuntimeError(f"remote failure with key={self.secret}")
+        raise self.error
+
+
+class CredentialLeakingClient:
+    def __init__(self) -> None:
+        self.secrets = (
+            "AUTHORIZATION-TOKEN",
+            "SIMULATED-API-KEY",
+            "SIMULATED-ACCESS-TOKEN",
+            "SIMULATED-CDS-KEY",
+            "SIMULATED-FILE-KEY",
+        )
+
+    def download(self, dataset: str, request: dict[str, object], target: Path) -> None:
+        target.write_bytes(b"partial")
+        raise RuntimeError(
+            "request rejected\n"
+            f"Authorization: Bearer {self.secrets[0]}\n"
+            f'api_key="{self.secrets[1]}"\n'
+            f"access_token={self.secrets[2]}\n"
+            f"key={self.secrets[3]}\n"
+            ".cdsapirc contents:\n"
+            "url: https://example.invalid/api\n"
+            f"key: {self.secrets[4]}"
+        )
 
 
 def _write_config(tmp_path: Path) -> Path:
@@ -107,16 +132,18 @@ def test_existing_target_refuses_overwrite_before_client_call(tmp_path: Path) ->
 
 def test_failed_download_creates_no_final_file_and_cleans_partial(tmp_path: Path) -> None:
     config, plan = _load_plan(tmp_path)
+    client = FailingClient()
 
-    with pytest.raises(DataDownloadError, match="no final file was created"):
+    with pytest.raises(CdsDownloadError, match="no final file was created") as error_info:
         execute_download(
             config,
             plan,
-            FailingClient(),
+            client,
             project_version="0.1.0",
             git_commit=None,
         )
 
+    assert error_info.value.__cause__ is client.error
     assert not plan.paths.final.exists()
     assert not plan.paths.temporary.exists()
     assert not plan.manifest_path.exists()
@@ -187,3 +214,65 @@ def test_client_secret_is_not_written_to_cli_output_or_logs(
     assert secret not in captured.out
     assert secret not in captured.err
     assert "CDS download failed" in captured.err
+    assert "remote failure" not in captured.err
+    assert "RuntimeError" not in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_verbose_failure_shows_sanitized_cause_chain_and_request_summary(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    secret = "VERBOSE-SUPER-SECRET"
+
+    exit_code = main(
+        [
+            "data",
+            "download",
+            "--config",
+            str(_write_config(tmp_path)),
+            "--verbose",
+        ],
+        download_client=FailingClient(secret),
+    )
+
+    captured = capsys.readouterr()
+    diagnostics = json.loads(captured.err.split("\n", 1)[1])
+    assert exit_code == 1
+    assert diagnostics["dataset"] == "reanalysis-era5-single-levels"
+    assert diagnostics["root_cause"]["type"] == "RuntimeError"
+    assert "remote failure" in diagnostics["root_cause"]["message"]
+    assert [item["type"] for item in diagnostics["exception_chain"]] == [
+        "CdsDownloadError",
+        "RuntimeError",
+    ]
+    assert diagnostics["request_summary"]["day_count"] == 29
+    assert diagnostics["request_summary"]["time_count"] == 24
+    assert diagnostics["request_summary"]["variables"] == [
+        "2m_temperature",
+        "surface_pressure",
+    ]
+    assert secret not in captured.err
+    assert "[REDACTED]" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_verbose_failure_redacts_credentials_and_publishes_nothing(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    client = CredentialLeakingClient()
+    config_path = _write_config(tmp_path)
+
+    exit_code = main(
+        ["data", "download", "--config", str(config_path), "--verbose"],
+        download_client=client,
+    )
+
+    captured = capsys.readouterr()
+    combined_output = captured.out + captured.err
+    assert exit_code == 1
+    for secret in client.secrets:
+        assert secret not in combined_output
+    assert "Bearer [REDACTED]" in combined_output or "[REDACTED]" in combined_output
+    assert not any((tmp_path / "raw").glob("*.nc"))
+    assert not any((tmp_path / "raw").glob("*.nc.part"))
+    assert not (tmp_path / "manifests" / "downloads.json").exists()

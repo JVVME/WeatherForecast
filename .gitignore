@@ -38,3 +38,5 @@ artifacts/data-validation/**
 
 # Keep explicit placeholders if a later milestone needs one.
 !**/.gitkeep
+
+/demos

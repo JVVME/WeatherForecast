@@ -9,7 +9,7 @@ from pathlib import Path
 
 from weather_ai.data.client import DownloadClient
 from weather_ai.data.config import Era5DownloadConfig
-from weather_ai.data.errors import DataDownloadError
+from weather_ai.data.errors import CdsDownloadError, DataDownloadError
 from weather_ai.data.files import (
     DownloadFileManager,
     DownloadPaths,
@@ -113,12 +113,13 @@ def execute_download(
     manager.prepare(plan.paths)
     try:
         client.download(plan.dataset, plan.request, plan.paths.temporary)
-    except Exception as error:
+    except Exception as exc:
         manager.cleanup_temporary(plan.paths)
-        raise DataDownloadError(
+        message = (
             "CDS download failed; no final file was created. Check local credentials, dataset "
             "licence acceptance, and CDS request status."
-        ) from error
+        )
+        raise CdsDownloadError(message) from exc
 
     try:
         downloaded_file = manager.finalize(plan.paths)
